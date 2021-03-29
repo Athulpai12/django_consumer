@@ -1,0 +1,106 @@
+{% extends 'basic_view/basic.html' %}
+
+{% block content %}
+  <br>
+  <ul>
+    <table id="event_data">
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+        </tr>
+       <tbody>
+        <tr>
+            <td> name </td>
+            <td> <input type="text" placeholder="Enter your name"></td>
+        </tr>
+        <tr>
+            <td> email </td>
+            <td> <input type="text" placeholder="Enter Comma separated email"></td>
+        </tr>
+        <tr>
+            <td> move_forward </td>
+            <td> <input type="checkbox"></td>
+        </tr>
+        <tr>
+            <td>interview_transcription</td>
+            <td> <input type="text" ></td>
+        </tr>
+        <tr>
+            <td> action_result </td>
+            <td> <input type="text" value="False" readonly></td>
+        </tr>
+       </tbody>
+    </table>
+  </ul>
+{% endblock content %}
+
+{% block script %}
+  <script>
+
+    function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    var randomUserId = getRandomInt(1, 100000).toString();
+    let data = {"user_id": randomUserId,
+                "name": "",
+                "email": "",
+                "move_forward": false,
+                "interview_transcription": "",
+                "action_result" : false}
+
+    var socket = new WebSocket('ws://' + window.location.host + '/ws/user/'+randomUserId+'/');
+
+    function collect_table_data(){
+        var table = $("table tbody");
+
+        table.find('tr').each(function (i) {
+            var $tds = $(this).find('td'),
+                key = $tds.eq(0).text(),
+                value = $tds.eq(0).val();
+                data[key] = value
+        }
+
+    return data
+    }
+
+    socket.onopen = function open() {
+      console.log('WebSockets connection created.');
+      socket.send(data)
+    };
+
+    socket.onmessage = function message(event) {
+        console.log(event)
+        table.find('tr').each(function (i) {
+            var $tds = $(this).find('td'),
+                key = $tds.eq(0).text(),
+                value = $tds.eq(0).val();
+                data[key] = value
+        }
+    };
+
+    if (socket.readyState == WebSocket.OPEN) {
+      socket.onopen();
+    }
+    function init() {
+        $('#event_data').on('update', function(){
+            socket.send(data)
+        });
+    }
+    init();
+  </script>
+    <style>
+    table {
+    		    font-family: arial, sans-serif;
+    		    border-collapse: collapse;
+    		    width: 100%;
+    		}
+    		td, th {
+    		    border: 1px solid #dddddd;
+    		    text-align: left;
+    		    padding: 8px;
+    		}
+    </style>
+{% endblock script %}
